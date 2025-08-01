@@ -1,0 +1,34 @@
+project:
+  version: '@project.version@'
+
+cloudflare:
+  r2:
+    access-key: ${R2_ACCESS_KEY}
+    secret-key: ${R2_SECRET_KEY}
+    documents-bucket: ${R2_DOCUMENTS_BUCKET}
+    images-bucket: ${R2_IMAGES_BUCKET}
+    endpoint: ${R2_ENDPOINT}
+    region: auto
+
+spring:
+  application:
+    name: bill-a-ton
+  datasource:
+    url: ${BILLATON_DB_URL}
+    username: ${BILLATON_DB_USERNAME}
+    password: ${BILLATON_DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+server:
+  port: ${PORT:8080}
+  servlet:
+    context-path: /api
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always

@@ -1,0 +1,71 @@
+package dev.erosende.billaton.application.domain.usecase;
+
+import dev.erosende.billaton.application.domain.enums.ParticipantType;
+import dev.erosende.billaton.application.domain.exception.ResourceNotFoundException;
+import dev.erosende.billaton.application.domain.model.IssuerConfigDto;
+import dev.erosende.billaton.application.domain.model.ParticipantDto;
+import dev.erosende.billaton.application.domain.ports.primary.ParticipantsUseCase;
+import dev.erosende.billaton.application.domain.ports.secondary.db.AddressRepository;
+import dev.erosende.billaton.application.domain.ports.secondary.db.DocumentsRepository;
+import dev.erosende.billaton.application.domain.ports.secondary.db.IssuerConfigRepository;
+import dev.erosende.billaton.application.domain.ports.secondary.db.ParticipantsRepository;
+import java.util.List;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@RequiredArgsConstructor
+public class ParticipantsUseCaseImpl implements ParticipantsUseCase {
+
+  private final AddressRepository addressRepository;
+  private final DocumentsRepository documentsRepository;
+  private final ParticipantsRepository participantsRepository;
+  private final IssuerConfigRepository issuerConfigRepository;
+
+  @Override
+  public List<ParticipantDto> getParticipants(ParticipantType participantType, String searchTerm) {
+    return participantsRepository.findParticipants(participantType.getValue(), searchTerm);
+  }
+
+  @Override
+  @Transactional(rollbackFor = Exception.class, transactionManager = "billatonTransactionManager")
+  public Integer createRecipientParticipant(ParticipantDto participant) {
+    Integer addressId = addressRepository.saveAddress(participant.getAddress());
+    participant.getAddress().setAddressId(addressId);
+    participant.setParticipantTypeId(ParticipantType.RECIPIENT.getValue());
+
+    return participantsRepository.saveParticipant(participant);
+  }
+
+  @Override
+  public IssuerConfigDto getIssuerConfig(Integer participantId) throws ResourceNotFoundException {
+    return issuerConfigRepository.findIssuerConfig(participantId)
+        .orElseThrow(() -> new ResourceNotFoundException("IssuerConfig", "participantId", participantId));
+  }
+
+  @Override
+  @Transactional(rollbackFor = Exception.class, transactionManager = "billatonTransactionManager")
+  public void updateIssuerConfig(IssuerConfigDto issuerConfig) {
+    issuerConfigRepository.updateIssuerConfig(issuerConfig);
+  }
+
+  @Override
+  @Transactional(rollbackFor = Exception.class, transactionManager = "billatonTransactionManager")
+  public void updateRecipientParticipant(ParticipantDto participant) {
+    if (participant.getAddress() != null) {
+      addressRepository.updateAddress(participant.getAddress());
+    }
+
+    participantsRepository.updateParticipant(participant);
+  }
+
+  @Override
+  @Transactional(rollbackFor = Exception.class, transactionManager = "billatonTransactionManager")
+  public void deleteRecipientParticipant(Integer participantId) {
+    documentsRepository.softDeleteParticipantDocuments(participantId); // TODO: Not so soft right now
+    participantsRepository.deleteParticipant(participantId);
+    addressRepository.deleteAddress(participantId);
+  }
+
+}
