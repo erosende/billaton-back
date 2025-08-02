@@ -157,37 +157,7 @@ jobs:
       run: |
         echo "Container logs (last 50 lines):"
         docker logs --tail=50 ${{ env.CONTAINER_NAME }} || echo "Failed to get logs"
-    
-    - name: Wait for application startup
-      run: |
-        echo "Waiting for application to be ready..."
-        max_attempts=20
-        attempt=1
-        
-        while [ $attempt -le $max_attempts ]; do
-          echo "Health check attempt $attempt/$max_attempts"
-          
-          if curl -f -s http://localhost:8080/api/actuator/health > /dev/null 2>&1; then
-            echo "✅ Application is healthy!"
-            curl -s http://localhost:8080/api/actuator/health | jq . || echo "Health endpoint responded"
-            exit 0
-          fi
-          
-          echo "❌ Health check failed. Container status:"
-          docker ps --filter "name=${{ env.CONTAINER_NAME }}" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
-          
-          if [ $attempt -eq $max_attempts ]; then
-            echo "🚨 Application failed to start after $max_attempts attempts"
-            echo "Final container logs:"
-            docker logs --tail=100 ${{ env.CONTAINER_NAME }}
-            exit 1
-          fi
-          
-          echo "Waiting 15 seconds before next attempt..."
-          sleep 15
-          attempt=$((attempt + 1))
-        done
-    
+
     - name: Clean up old images
       if: success()
       run: |

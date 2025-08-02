@@ -45,9 +45,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/actuator/info").permitAll()
                         
                         // API Documentation endpoints (if using Swagger)
-                        .requestMatchers("/api/v3/api-docs/**").permitAll()
-                        .requestMatchers("/api/swagger-ui/**").permitAll()
-                        .requestMatchers("/api/swagger-ui.html").permitAll()
+                        .requestMatchers("/v3/api-docs/**").permitAll()
+                        .requestMatchers("/swagger-ui/**").permitAll()
+                        .requestMatchers("/swagger-ui.html").permitAll()
                         
                         // All other API endpoints require authentication
                         .requestMatchers("/api/billaton/**").authenticated()
