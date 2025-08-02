@@ -24,44 +24,45 @@ public class ParticipantsRepositoryImpl implements ParticipantsRepository {
   private static final String WILDCARD_TEMPLATE = "%{0}%";
 
   private static final String FIND_PARTICIPANTS_SQL = """
-      SELECT p.participantId, p.identificationNumber, p.name, p.surnames, p.email, p.phoneNumber,
-             pt.name AS participantType, it.name AS identificationType, it.identificationTypeId,
-             a.addressId, a.addressLineOne, a.addressLineTwo, a.postalCode, a.city, a.province
-      FROM Participant p
-      INNER JOIN Address a ON a.addressId = p.addressId
-      INNER JOIN IdentificationType it ON it.identificationTypeId = p.identificationTypeId
-      INNER JOIN ParticipantType pt ON pt.participantTypeId = p.participantTypeId
-      WHERE p.participantTypeId = :participantType
+      SELECT p.participant_id, p.identification_number, p.name, p.surnames, p.email, p.phone_number,
+             pt.name AS participant_type, it.name AS identification_type, it.identification_type_id,
+             a.address_id, a.address_line_one, a.address_line_two, a.postal_code, a.city, a.province
+      FROM participant p
+      INNER JOIN address a ON a.address_id = p.address_id
+      INNER JOIN identification_type it ON it.identification_type_id = p.identification_type_id
+      INNER JOIN participant_type pt ON pt.participant_type_id = p.participant_type_id
+      WHERE p.participant_type_id = :participantType
         AND (
-          :searchTerm IS NULL
+          COALESCE(:searchTerm, '') = ''
           OR p.name LIKE :searchTerm
           OR p.surnames LIKE :searchTerm
-          OR p.identificationNumber LIKE :searchTerm
+          OR p.identification_number LIKE :searchTerm
         )
-      ORDER BY p.name, p.surnames ASC
+        AND p.historical IS FALSE
+      ORDER BY p.name, p.surnames
       """;
 
   private static final String FIND_PARTICIPANT_SQL = """
-      SELECT p.participantId, p.identificationNumber, p.name, p.surnames, p.email, p.phoneNumber,
-             pt.name AS participantType, it.name AS identificationType, it.identificationTypeId,
-             a.addressId, a.addressLineOne, a.addressLineTwo, a.postalCode, a.city, a.province
-      FROM Participant p
-      INNER JOIN Address a ON a.addressId = p.addressId
-      INNER JOIN IdentificationType it ON it.identificationTypeId = p.identificationTypeId
-      INNER JOIN ParticipantType pt ON pt.participantTypeId = p.participantTypeId
-      WHERE p.participantId = :participantId
+      SELECT p.participant_id, p.identification_number, p.name, p.surnames, p.email, p.phone_number,
+             pt.name AS participant_type, it.name AS identification_type, it.identification_type_id,
+             a.address_id, a.address_line_one, a.address_line_two, a.postal_code, a.city, a.province
+      FROM participant p
+      INNER JOIN address a ON a.address_id = p.address_id
+      INNER JOIN identification_type it ON it.identification_type_id = p.identification_type_id
+      INNER JOIN participant_type pt ON pt.participant_type_id = p.participant_type_id
+      WHERE p.participant_id = :participantId
       """;
 
   private static final String SAVE_PARTICIPANT_SQL = """
-      INSERT INTO Participant (
-        identificationNumber,
+      INSERT INTO participant (
+        identification_number,
         name,
         surnames,
         email,
-        phoneNumber,
-        addressId,
-        identificationTypeId,
-        participantTypeId
+        phone_number,
+        address_id,
+        identification_type_id,
+        participant_type_id
       )
       VALUES (
         :identificationNumber,
@@ -76,21 +77,26 @@ public class ParticipantsRepositoryImpl implements ParticipantsRepository {
       """;
 
   private static final String UPDATE_PARTICIPANT_SQL = """
-      UPDATE Participant
+      UPDATE participant
       SET
-        identificationNumber = :identificationNumber,
+        identification_number = :identificationNumber,
         name = :name,
         surnames = :surnames,
         email = :email,
-        phoneNumber = :phoneNumber,
-        identificationTypeId = :identificationTypeId
-      WHERE participantId = :participantId
+        phone_number = :phoneNumber,
+        identification_type_id = :identificationTypeId
+      WHERE participant_id = :participantId
       """;
 
   private static final String DELETE_PARTICIPANT_SQL = """
-      DELETE p
-      FROM Participant p
-      WHERE p.participantId = :participantId AND p.participantTypeId = 2 -- participant type 2 is Recipient
+      DELETE FROM participant
+      WHERE participant_id = :participantId AND participant_type_id = 2 -- participant type 2 is Recipient
+      """;
+
+  private static final String SOFT_DELETE_PARTICIPANT_SQL = """
+      UPDATE participant
+      SET historical = true
+      WHERE participant_id = :participantId AND participant_type_id = 2 -- participant type 2 is Recipient
       """;
 
   private final NamedParameterJdbcTemplate jdbcTemplate;
@@ -133,7 +139,7 @@ public class ParticipantsRepositoryImpl implements ParticipantsRepository {
         .addValue("participantTypeId", participant.getParticipantTypeId());
 
     KeyHolder keyHolder = new GeneratedKeyHolder();
-    jdbcTemplate.update(SAVE_PARTICIPANT_SQL, params, keyHolder);
+    jdbcTemplate.update(SAVE_PARTICIPANT_SQL, params, keyHolder, new String[]{"participant_id"});
 
     return keyHolder.getKey().intValue();
   }
@@ -157,8 +163,14 @@ public class ParticipantsRepositoryImpl implements ParticipantsRepository {
     jdbcTemplate.update(DELETE_PARTICIPANT_SQL, params);
   }
 
+  @Override
+  public void softDeleteParticipant(Integer participantId) {
+    SqlParameterSource params = new MapSqlParameterSource("participantId", participantId);
+    jdbcTemplate.update(SOFT_DELETE_PARTICIPANT_SQL, params);
+  }
+
   private String getWildcard(String searchTerm) {
-    return searchTerm == null ? null : MessageFormat.format(WILDCARD_TEMPLATE, searchTerm);
+    return searchTerm == null ? "" : MessageFormat.format(WILDCARD_TEMPLATE, searchTerm);
   }
 
 }

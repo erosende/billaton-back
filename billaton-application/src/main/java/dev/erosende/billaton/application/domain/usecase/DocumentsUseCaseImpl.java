@@ -41,7 +41,7 @@ public class DocumentsUseCaseImpl implements DocumentsUseCase {
   private final CrimsonReportMapper crimsonReportMapper;
 
   @Override
-  @Transactional(readOnly = true, transactionManager = "billatonTransactionManager")
+  @Transactional(readOnly = true)
   public Page<DocumentDto> getDocuments(PagingParams pagingParams) {
     return documentsRepository.findDocuments(pagingParams);
   }
@@ -52,45 +52,44 @@ public class DocumentsUseCaseImpl implements DocumentsUseCase {
   }
 
   @Override
-  @Transactional(rollbackFor = Exception.class, transactionManager = "billatonTransactionManager")
+  @Transactional(rollbackFor = Exception.class)
   public Integer createDocument(DocumentDto document) {
     return documentsRepository.saveDocument(document);
   }
 
   @Override
-  @Transactional(rollbackFor = Exception.class, transactionManager = "billatonTransactionManager")
+  @Transactional(rollbackFor = Exception.class)
   public Integer createConcept(ConceptDto concept) {
     return conceptsRepository.saveConcept(concept);
   }
 
   @Override
-  @Transactional(rollbackFor = Exception.class, transactionManager = "billatonTransactionManager")
+  @Transactional(rollbackFor = Exception.class)
   public void updateDocument(DocumentDto document) {
     documentsRepository.updateDocument(document);
   }
 
   @Override
-  @Transactional(rollbackFor = Exception.class, transactionManager = "billatonTransactionManager")
+  @Transactional(rollbackFor = Exception.class)
   public void updateConcept(ConceptDto concept) {
     conceptsRepository.updateConcept(concept);
   }
 
   @Override
-  @Transactional(rollbackFor = Exception.class, transactionManager = "billatonTransactionManager")
+  @Transactional(rollbackFor = Exception.class)
   public void deleteDocument(Integer documentId) {
-    conceptsRepository.deleteByDocumentId(documentId);
-    documentsRepository.deleteDocument(documentId);
+    documentsRepository.deleteDocumentLogically(documentId);
   }
 
   @Override
-  @Transactional(rollbackFor = Exception.class, transactionManager = "billatonTransactionManager")
+  @Transactional(rollbackFor = Exception.class)
   public void deleteConcept(Integer documentId, Integer conceptId) {
     conceptsRepository.deleteConcept(documentId, conceptId);
   }
 
   // TODO This needs data validation before attempting to generate the report
   @Override
-  @Transactional(rollbackFor = Exception.class, transactionManager = "billatonTransactionManager")
+  @Transactional(rollbackFor = Exception.class)
   public DocumentFileDto generateDocumentAsPdf(Integer documentId) throws ResourceNotFoundException {
     ReportDataDto reportData = new ReportDataDto();
     fillDocumentData(documentId, reportData);

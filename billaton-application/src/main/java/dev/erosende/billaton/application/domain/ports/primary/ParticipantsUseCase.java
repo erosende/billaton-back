@@ -18,6 +18,6 @@ public interface ParticipantsUseCase {
 
   void updateIssuerConfig(IssuerConfigDto issuerConfig);
 
-  void deleteRecipientParticipant(Integer participantId);
+  void deleteRecipientParticipant(Integer participantId) throws ResourceNotFoundException;
 
 }

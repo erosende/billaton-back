@@ -27,6 +27,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @Slf4j
+@CrossOrigin(origins = "*")
 @Tag(name = "Participants Controller")
 @RestController("ParticipantsController")
 @RequestMapping("/billaton/participants")

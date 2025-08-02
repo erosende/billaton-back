@@ -18,8 +18,10 @@ public interface DocumentsRepository {
 
   void updateDocumentResourcePath(Integer documentId, String resourcePath);
 
-  void deleteDocument(Integer documentId);
+  void deleteDocumentLogically(Integer documentId);
 
-  void softDeleteParticipantDocuments(Integer participantId);
+  int softDeleteDocumentByRecipient(Integer recipientId);
+
+  int softDeleteDocumentByIssuer(Integer issuerId);
 
 }

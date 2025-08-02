@@ -18,21 +18,21 @@ public class IssuerConfigRepositoryImpl implements IssuerConfigRepository {
 
   private static final String FIND_ISSUER_CONFIG_SQL = """
       SELECT
-          issuerConfigId,
-          issuerId,
+          issuer_config_id,
+          issuer_id,
           vat,
-          paymentAccountNumber,
-          logoPath
-      FROM IssuerConfig
-      WHERE issuerId = :participantId
+          payment_account_number,
+          logo_path
+      FROM issuer_config
+      WHERE issuer_id = :participantId
       """;
 
   private static final String UPDATE_ISSUER_CONFIG_SQL = """
-      UPDATE IssuerConfig
+      UPDATE issuer_config
       SET
         vat = :vat,
-        paymentAccountNumber = :paymentAccountNumber
-      WHERE issuerConfigId = :issuerConfigId AND issuerId = :issuerId
+        payment_account_number = :paymentAccountNumber
+      WHERE issuer_config_id = :issuerConfigId AND issuer_id = :issuerId
       """;
 
   private final NamedParameterJdbcTemplate jdbcTemplate;

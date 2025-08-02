@@ -15,10 +15,10 @@ import org.springframework.stereotype.Repository;
 public class AddressRepositoryImpl implements AddressRepository {
 
   private static final String SAVE_ADDRESS_SQL = """
-      INSERT INTO Address (
-        addressLineOne,
-        addressLineTwo,
-        postalCode,
+      INSERT INTO address (
+        address_line_one,
+        address_line_two,
+        postal_code,
         city,
         province
       ) VALUES (
@@ -31,21 +31,19 @@ public class AddressRepositoryImpl implements AddressRepository {
       """;
 
   private static final String UPDATE_ADDRESS_SQL = """
-      UPDATE Address
+      UPDATE address
       SET
-        addressLineOne = :addressLineOne,
-        addressLineTwo = :addressLineTwo,
-        postalCode = :postalCode,
+        address_line_one = :addressLineOne,
+        address_line_two = :addressLineTwo,
+        postal_code = :postalCode,
         city = :city,
         province = :province
-      WHERE addressId = :addressId
+      WHERE address_id = :addressId
       """;
 
   private static final String DELETE_ADDRESS_SQL = """
-      DELETE a
-      FROM Address a
-      INNER JOIN Participant p ON a.addressId = p.addressId
-      WHERE p.participantId = :participantId AND p.participantTypeId = 2 -- participant type 2 is Recipient
+      DELETE FROM address
+      WHERE address_id = :addressId
       """;
 
   private final NamedParameterJdbcTemplate jdbcTemplate;
@@ -60,7 +58,7 @@ public class AddressRepositoryImpl implements AddressRepository {
         .addValue("province", address.getProvince());
 
     KeyHolder keyHolder = new GeneratedKeyHolder();
-    jdbcTemplate.update(SAVE_ADDRESS_SQL, params, keyHolder);
+    jdbcTemplate.update(SAVE_ADDRESS_SQL, params, keyHolder, new String[]{"address_id"});
 
     return keyHolder.getKey().intValue();
   }
@@ -78,8 +76,8 @@ public class AddressRepositoryImpl implements AddressRepository {
   }
 
   @Override
-  public void deleteAddress(Integer participantId) {
-    SqlParameterSource params = new MapSqlParameterSource("participantId", participantId);
+  public void deleteAddress(Integer addressId) {
+    SqlParameterSource params = new MapSqlParameterSource("addressId", addressId);
     jdbcTemplate.update(DELETE_ADDRESS_SQL, params);
   }
 

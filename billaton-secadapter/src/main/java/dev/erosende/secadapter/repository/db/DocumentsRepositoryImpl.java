@@ -26,37 +26,39 @@ import java.util.Optional;
 public class DocumentsRepositoryImpl implements DocumentsRepository {
 
   private static final Map<String, String> FIELD_MAPPINGS = new HashMap<>() {{
-    put("documentId", "d.documentId");
-    put("documentTypeId", "d.documentTypeId");
-    put("documentDate", "d.documentDate");
-    put("recipientId", "d.recipientId");
+    put("documentId", "d.document_id");
+    put("documentTypeId", "d.document_type_id");
+    put("documentDate", "d.document_date");
+    put("recipientId", "d.recipient_id");
+    put("historical", "d.historical");
   }};
 
   public static final String WHERE_KEYWORD = " WHERE ";
-  private static final String GROUP_BY_DOCUMENT_ID = " GROUP BY d.documentId ";
-  private static final String WHERE_CLAUSE_DOCUMENT_ID = " WHERE d.documentId = :documentId ";
+  private static final String GROUP_BY_DOCUMENT_ID = "";
+  private static final String WHERE_CLAUSE_DOCUMENT_ID = " WHERE d.document_id = :documentId ";
 
   private static final String FIND_DOCUMENT_BASE_SQL = """
-      SELECT d.documentId, d.documentTypeId, d.documentCode, d.documentDate, d.resourcePath,
-             d.issuerId, d.recipientId, dt.name AS documentType,
-             SUM(c.amount * c.pricePerUnit * (1 + (ic.vat / 100))) AS totalAmount,
-             CONCAT(r.name, ' ', r.surnames) AS recipientName,
-             CONCAT(i.name, ' ', i.surnames) AS issuerName
-      FROM Document d
-      INNER JOIN DocumentType dt ON dt.documentTypeId = d.documentTypeId
-      INNER JOIN IssuerConfig ic ON ic.issuerId = d.issuerId
-      INNER JOIN Participant r ON r.participantId = d.recipientId
-      INNER JOIN Participant i ON i.participantId = d.issuerId
-      LEFT JOIN Concept c ON c.documentId = d.documentId
+      SELECT DISTINCT
+             d.document_id, d.document_type_id, d.document_code, d.document_date, d.resource_path,
+             d.issuer_id, d.recipient_id, dt.name AS document_type,
+             SUM(c.amount * c.price_per_unit * (1 + (ic.vat / 100))) OVER (PARTITION BY d.document_id) AS total_amount,
+             CONCAT(r.name, ' ', r.surnames) AS recipient_name,
+             CONCAT(i.name, ' ', i.surnames) AS issuer_name
+      FROM document d
+      INNER JOIN document_type dt ON dt.document_type_id = d.document_type_id
+      INNER JOIN issuer_config ic ON ic.issuer_id = d.issuer_id
+      INNER JOIN participant r ON r.participant_id = d.recipient_id
+      INNER JOIN participant i ON i.participant_id = d.issuer_id
+      LEFT JOIN concept c ON c.document_id = d.document_id
       """;
 
   private static final String SAVE_DOCUMENT_SQL = """
-      INSERT INTO Document (
-        documentTypeId,
-        documentDate,
-        documentCode,
-        issuerId,
-        recipientId
+      INSERT INTO document (
+        document_type_id,
+        document_date,
+        document_code,
+        issuer_id,
+        recipient_id
       ) VALUES (
         :documentTypeId,
         :documentDate,
@@ -67,35 +69,43 @@ public class DocumentsRepositoryImpl implements DocumentsRepository {
   """;
 
   private static final String UPDATE_DOCUMENT_SQL = """
-      UPDATE Document
+      UPDATE document
       SET
-        documentTypeId = :documentTypeId,
-        documentDate = :documentDate,
-        documentCode = :documentCode,
-        issuerId = :issuerId,
-        recipientId = :recipientId
-      WHERE documentId = :documentId
+        document_type_id = :documentTypeId,
+        document_date = :documentDate,
+        document_code = :documentCode,
+        issuer_id = :issuerId,
+        recipient_id = :recipientId
+      WHERE document_id = :documentId
   """;
 
   private static final String UPDATE_RESOURCE_PATH_SQL = """
-      UPDATE Document
-      SET resourcePath = :resourcePath
-      WHERE documentId = :documentId
+      UPDATE document
+      SET resource_path = :resourcePath
+      WHERE document_id = :documentId
       """;
 
-  private static final String DELETE_DOCUMENT_SQL = """
-      DELETE FROM Document
-      WHERE documentId = :documentId
+  private static final String DELETE_DOCUMENT_LOGICALLY_SQL = """
+      UPDATE document
+      SET historical = true
+      WHERE document_id = :documentId
       """;
 
-  private static final String SOFT_DELETE_PARTICIPANT_DOCUMENTS_SQL = """
-      DELETE FROM Document d
-      WHERE d.recipientId = :participantId
+  private static final String SOFT_DELETE_DOCUMENT_BY_RECIPIENT_SQL = """
+      UPDATE document
+      SET historical = true
+      WHERE recipient_id = :recipientId
+      """;
+
+  private static final String SOFT_DELETE_DOCUMENT_BY_ISSUER_SQL = """
+      UPDATE document
+      SET historical = true
+      WHERE issuer_id = :issuerId
       """;
 
   private static final String COUNT_DOCUMENTS_BASE_SQL = """
       SELECT COUNT(*)
-      FROM Document d
+      FROM document d
       """;
   
   private final NamedParameterJdbcTemplate jdbcTemplate;
@@ -107,6 +117,7 @@ public class DocumentsRepositoryImpl implements DocumentsRepository {
     MapSqlParameterSource params = new MapSqlParameterSource();
 
     //Add filters
+    PagingUtils.addHistoricalFilterToPagingParams(pagingParams, false);
     String whereClause = PagingUtils.buildWhereClause(pagingParams.getFilters(), FIELD_MAPPINGS, params);
     if (StringUtils.isNotEmpty(whereClause)) {
       queryBuilder.append(WHERE_KEYWORD).append(whereClause);
@@ -162,7 +173,7 @@ public class DocumentsRepositoryImpl implements DocumentsRepository {
         .addValue("recipientId", document.getRecipientId());
     KeyHolder keyHolder = new GeneratedKeyHolder();
 
-    jdbcTemplate.update(SAVE_DOCUMENT_SQL, params, keyHolder);
+    jdbcTemplate.update(SAVE_DOCUMENT_SQL, params, keyHolder, new String[]{"document_id"});
     return keyHolder.getKey().intValue();
   }
 
@@ -187,15 +198,21 @@ public class DocumentsRepositoryImpl implements DocumentsRepository {
   }
 
   @Override
-  public void deleteDocument(Integer documentId) {
+  public void deleteDocumentLogically(Integer documentId) {
     SqlParameterSource params = new MapSqlParameterSource("documentId", documentId);
-    jdbcTemplate.update(DELETE_DOCUMENT_SQL, params);
+    jdbcTemplate.update(DELETE_DOCUMENT_LOGICALLY_SQL, params);
   }
 
   @Override
-  public void softDeleteParticipantDocuments(Integer participantId) {
-    SqlParameterSource params = new MapSqlParameterSource("participantId", participantId);
-    jdbcTemplate.update(SOFT_DELETE_PARTICIPANT_DOCUMENTS_SQL, params);
+  public int softDeleteDocumentByRecipient(Integer recipientId) {
+    SqlParameterSource params = new MapSqlParameterSource("recipientId", recipientId);
+    return jdbcTemplate.update(SOFT_DELETE_DOCUMENT_BY_RECIPIENT_SQL, params);
+  }
+
+  @Override
+  public int softDeleteDocumentByIssuer(Integer issuerId) {
+    SqlParameterSource params = new MapSqlParameterSource("issuerId", issuerId);
+    return jdbcTemplate.update(SOFT_DELETE_DOCUMENT_BY_ISSUER_SQL, params);
   }
 
 }

@@ -16,4 +16,6 @@ public interface ParticipantsRepository {
 
   void deleteParticipant(Integer participantId);
 
+  void softDeleteParticipant(Integer participantId);
+
 }

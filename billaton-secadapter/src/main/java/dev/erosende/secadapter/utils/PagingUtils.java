@@ -1,6 +1,8 @@
 package dev.erosende.secadapter.utils;
 
+import dev.erosende.billaton.application.domain.enums.FilterOperation;
 import dev.erosende.billaton.application.domain.model.generic.FilterCriteria;
+import dev.erosende.billaton.application.domain.model.generic.PagingParams;
 import dev.erosende.billaton.application.domain.model.generic.SortCriteria;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 
@@ -73,6 +75,16 @@ public class PagingUtils {
           }
         })
         .collect(Collectors.joining(" AND "));
+  }
+
+  public static void addHistoricalFilterToPagingParams(PagingParams params, Boolean historicalValue) {
+    params.addFilter(
+        FilterCriteria.builder()
+            .field("historical")
+            .value(historicalValue)
+            .operation(FilterOperation.EQUALS)
+            .build()
+    );
   }
 
   public static String buildOrderByClause(List<SortCriteria> sortCriteria, Map<String, String> fieldMappings) {

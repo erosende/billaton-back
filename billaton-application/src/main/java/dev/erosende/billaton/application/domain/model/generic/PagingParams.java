@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -24,6 +25,13 @@ public class PagingParams {
 
   public int getOffset() {
     return page * size;
+  }
+
+  public void addFilter(FilterCriteria filter) {
+    if (filters == null) {
+      filters = new ArrayList<>();
+    }
+    filters.add(filter);
   }
 
 }

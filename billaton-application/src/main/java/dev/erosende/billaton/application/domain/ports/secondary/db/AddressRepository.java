@@ -8,6 +8,6 @@ public interface AddressRepository {
 
   void updateAddress(AddressDto address);
 
-  void deleteAddress(Integer participantId);
+  void deleteAddress(Integer addressId);
 
 }

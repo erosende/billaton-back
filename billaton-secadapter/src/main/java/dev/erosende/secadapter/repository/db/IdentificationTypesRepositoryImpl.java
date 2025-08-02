@@ -14,8 +14,8 @@ import org.springframework.stereotype.Repository;
 public class IdentificationTypesRepositoryImpl implements IdentificationTypesRepository {
 
   private static final String FIND_ALL_IDENTIFICATION_TYPES_SQL = """
-      SELECT identificationTypeId, name
-      FROM IdentificationType
+      SELECT identification_type_id, name
+      FROM identification_type
       """;
 
   private final NamedParameterJdbcTemplate jdbcTemplate;

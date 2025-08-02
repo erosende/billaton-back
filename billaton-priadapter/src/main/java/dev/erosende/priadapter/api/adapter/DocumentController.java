@@ -30,6 +30,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Slf4j
+@CrossOrigin(origins = "*")
 @Tag(name = "Documents Controller")
 @RestController("DocumentsController")
 @RequestMapping("/billaton/documents")

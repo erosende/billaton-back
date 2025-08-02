@@ -18,33 +18,33 @@ import java.util.List;
 public class ConceptsRepositoryImpl implements ConceptsRepository {
 
   private static final String FIND_CONCEPTS_SQL = """
-      SELECT c.conceptId, c.description, c.amount, c.pricePerUnit, c.documentId
-      FROM Concept c
-      WHERE c.documentId = :documentId
+      SELECT c.concept_id, c.description, c.amount, c.price_per_unit, c.document_id
+      FROM concept c
+      WHERE c.document_id = :documentId
       """;
 
   private static final String SAVE_CONCEPT_SQL = """
-      INSERT INTO Concept(description, amount, pricePerUnit, documentId)
+      INSERT INTO concept(description, amount, price_per_unit, document_id)
       VALUES (:description, :amount, :pricePerUnit, :documentId)
       """;
 
   private static final String UPDATE_CONCEPT_SQL = """
-      UPDATE Concept
+      UPDATE concept
       SET
         description = :description,
         amount = :amount,
-        pricePerUnit = :pricePerUnit
-      WHERE conceptId = :conceptId AND documentId = :documentId
+        price_per_unit = :pricePerUnit
+      WHERE concept_id = :conceptId AND document_id = :documentId
       """;
 
   private static final String DELETE_CONCEPTS_SQL = """
-      DELETE FROM Concept c
-      WHERE c.documentId = :documentId AND c.conceptId = :conceptId
+      DELETE FROM concept c
+      WHERE c.document_id = :documentId AND c.concept_id = :conceptId
       """;
 
   private static final String DELETE_ALL_DOCUMENT_CONCEPTS_SQL = """
-      DELETE FROM Concept c
-      WHERE c.documentId = :documentId
+      DELETE FROM concept c
+      WHERE c.document_id = :documentId
       """;
 
   private final NamedParameterJdbcTemplate jdbcTemplate;
@@ -64,7 +64,7 @@ public class ConceptsRepositoryImpl implements ConceptsRepository {
         .addValue("documentId", concept.getDocumentId());
     KeyHolder keyHolder = new GeneratedKeyHolder();
 
-    jdbcTemplate.update(SAVE_CONCEPT_SQL, params, keyHolder);
+    jdbcTemplate.update(SAVE_CONCEPT_SQL, params, keyHolder, new String[]{"concept_id"});
     return keyHolder.getKey().intValue();
   }
 
