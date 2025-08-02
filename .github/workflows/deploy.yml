@@ -9,7 +9,7 @@ on:
 
 env:
   IMAGE_NAME: billaton-backend
-  CONTAINER_NAME: billaton-app
+  CONTAINER_NAME: billaton-backend
 
 jobs:
   test:
@@ -68,26 +68,70 @@ jobs:
     needs: build
     if: github.ref == 'refs/heads/main'
     name: Deploy to Production
+    timeout-minutes: 15
     
     steps:
     - uses: actions/checkout@v4
+    
+    - name: Verify runner environment
+      run: |
+        echo "Runner info:"
+        whoami
+        pwd
+        docker --version
+        echo "Available space:"
+        df -h
     
     - name: Download artifact
       uses: actions/download-artifact@v4
       with:
         name: docker-image
     
+    - name: Verify artifact
+      run: |
+        echo "Downloaded files:"
+        ls -la
+        echo "Artifact size:"
+        du -h billaton-backend.tar.gz
+    
     - name: Load Docker image
-      run: docker load < billaton-backend.tar.gz
+      run: |
+        echo "Loading Docker image..."
+        docker load < billaton-backend.tar.gz
+        echo "Available images:"
+        docker images | grep billaton || echo "No billaton images found"
+    
+    - name: Check existing containers
+      run: |
+        echo "Current containers:"
+        docker ps -a --filter "name=${{ env.CONTAINER_NAME }}" || true
     
     - name: Stop existing container
       run: |
-        docker stop ${{ env.CONTAINER_NAME }} || true
-        docker rm ${{ env.CONTAINER_NAME }} || true
-      continue-on-error: true
+        echo "Stopping existing container..."
+        if docker stop ${{ env.CONTAINER_NAME }} 2>/dev/null; then
+          echo "Container stopped successfully"
+        else
+          echo "No container to stop or failed to stop"
+        fi
+        
+        if docker rm ${{ env.CONTAINER_NAME }} 2>/dev/null; then
+          echo "Container removed successfully"
+        else
+          echo "No container to remove or failed to remove"
+        fi
+    
+    - name: Verify secrets
+      run: |
+        echo "Checking secrets configuration..."
+        if [ -z "${{ secrets.BILLATON_DB_URL }}" ]; then echo "ERROR: BILLATON_DB_URL not set"; exit 1; fi
+        if [ -z "${{ secrets.BILLATON_DB_USERNAME }}" ]; then echo "ERROR: BILLATON_DB_USERNAME not set"; exit 1; fi
+        if [ -z "${{ secrets.BILLATON_DB_PASSWORD }}" ]; then echo "ERROR: BILLATON_DB_PASSWORD not set"; exit 1; fi
+        echo "Basic secrets validation passed"
     
     - name: Deploy new container
       run: |
+        echo "Starting new container..."
         docker run -d \
           --name ${{ env.CONTAINER_NAME }} \
           --restart unless-stopped \
@@ -103,21 +147,51 @@ jobs:
           -e SUPABASE_JWT_SECRET="${{ secrets.SUPABASE_JWT_SECRET }}" \
           -e PORT=8080 \
           ${{ env.IMAGE_NAME }}:latest
+        
+        echo "Container started. Checking status..."
+        sleep 5
+        docker ps --filter "name=${{ env.CONTAINER_NAME }}"
+    
+    - name: Check container logs
+      if: always()
+      run: |
+        echo "Container logs (last 50 lines):"
+        docker logs --tail=50 ${{ env.CONTAINER_NAME }} || echo "Failed to get logs"
     
     - name: Wait for application startup
       run: |
-        for i in {1..30}; do
-          if curl -f http://localhost:8080/api/actuator/health; then
-            echo "Application is healthy!"
+        echo "Waiting for application to be ready..."
+        max_attempts=20
+        attempt=1
+        
+        while [ $attempt -le $max_attempts ]; do
+          echo "Health check attempt $attempt/$max_attempts"
+          
+          if curl -f -s http://localhost:8080/api/actuator/health > /dev/null 2>&1; then
+            echo "✅ Application is healthy!"
+            curl -s http://localhost:8080/api/actuator/health | jq . || echo "Health endpoint responded"
             exit 0
           fi
-          echo "Waiting for application to start... ($i/30)"
-          sleep 10
+          
+          echo "❌ Health check failed. Container status:"
+          docker ps --filter "name=${{ env.CONTAINER_NAME }}" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+          
+          if [ $attempt -eq $max_attempts ]; then
+            echo "🚨 Application failed to start after $max_attempts attempts"
+            echo "Final container logs:"
+            docker logs --tail=100 ${{ env.CONTAINER_NAME }}
+            exit 1
+          fi
+          
+          echo "Waiting 15 seconds before next attempt..."
+          sleep 15
+          attempt=$((attempt + 1))
         done
-        echo "Application failed to start"
-        exit 1
     
     - name: Clean up old images
+      if: success()
       run: |
+        echo "Cleaning up old Docker resources..."
         docker image prune -f --filter "until=24h"
         docker container prune -f --filter "until=24h"
+        echo "Cleanup completed"
