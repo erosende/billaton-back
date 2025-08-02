@@ -10,6 +10,10 @@ cloudflare:
     endpoint: ${R2_ENDPOINT}
     region: auto
 
+supabase:
+  jwt:
+    secret: ${SUPABASE_JWT_SECRET}
+
 spring:
   application:
     name: bill-a-ton
@@ -18,9 +22,26 @@ spring:
     username: ${BILLATON_DB_USERNAME}
     password: ${BILLATON_DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 8
+      minimum-idle: 2
+      idle-timeout: 300000
+      max-lifetime: 1200000
+      connection-timeout: 20000
+      leak-detection-threshold: 60000
+
+  security:
+    user:
+      name: disabled
+      password: disabled
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${supabase.url}/auth/v1/jwks
 
 server:
   port: ${PORT:8080}
+  shutdown: graceful
   servlet:
     context-path: /api
 

@@ -53,7 +53,7 @@
     </dependencies>
 
     <build>
-        <finalName>${project.artifactId}</finalName>
+        <finalName>billaton</finalName>
 
         <plugins>
 

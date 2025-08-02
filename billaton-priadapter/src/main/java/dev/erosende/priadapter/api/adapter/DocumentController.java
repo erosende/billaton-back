@@ -3,6 +3,7 @@ package dev.erosende.priadapter.api.adapter;
 import dev.erosende.billaton.application.domain.model.ConceptDto;
 import dev.erosende.billaton.application.domain.model.DocumentDto;
 import dev.erosende.billaton.application.domain.model.DocumentFileDto;
+import dev.erosende.billaton.application.domain.model.auth.JwtAuthenticationToken;
 import dev.erosende.billaton.application.domain.model.generic.Page;
 import dev.erosende.billaton.application.domain.model.generic.PagingParams;
 import dev.erosende.billaton.application.domain.ports.primary.DocumentsUseCase;
@@ -12,9 +13,9 @@ import dev.erosende.priadapter.api.mapper.ConceptMapper;
 import dev.erosende.priadapter.api.mapper.DocumentMapper;
 import dev.erosende.priadapter.api.model.request.ConceptRequestDto;
 import dev.erosende.priadapter.api.model.request.DocumentRequestDto;
+import dev.erosende.priadapter.api.model.response.BaseResponse;
 import dev.erosende.priadapter.api.model.response.ConceptResponseDto;
 import dev.erosende.priadapter.api.model.response.DocumentResponseDto;
-import dev.erosende.priadapter.api.model.response.BaseResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -24,13 +25,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.logging.LogLevel;
 import org.springframework.http.*;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.time.LocalDate;
 import java.util.List;
 
 @Slf4j
-@CrossOrigin(origins = "*")
 @Tag(name = "Documents Controller")
 @RestController("DocumentsController")
 @RequestMapping("/billaton/documents")
@@ -46,6 +48,7 @@ public class DocumentController {
   @ApiResponse(responseCode = "200", description = ResponseMessage.SUCCESS_RETRIEVAL)
   @ApiResponse(responseCode = "500", description = ResponseMessage.ERROR_INTERNAL)
   public ResponseEntity<BaseResponse<Page<DocumentResponseDto>>> getDocuments(
+      Authentication authentication,
       @RequestParam(defaultValue = "0") @Min(0) int page,
       @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size,
       @RequestParam(required = false) List<String> sort,
@@ -63,8 +66,8 @@ public class DocumentController {
           .sort(PagingUtils.parseSortCriteria(sort))
           .filters(PagingUtils.buildDocumentFilters(documentTypeId, dateFrom, dateTo, recipientId))
           .build();
-
-      Page<DocumentDto> useCaseResult = documentsUseCase.getDocuments(pagingParams);
+      String userId = ((JwtAuthenticationToken) authentication).getUserDto().getId();
+      Page<DocumentDto> useCaseResult = documentsUseCase.getDocuments(userId, pagingParams);
       Page<DocumentResponseDto> responseData = useCaseResult.map(documentMapper::toDocumentResponseDto);
 
       response = ResponseEntity.ok(BaseResponse.success(responseData));
@@ -98,11 +101,15 @@ public class DocumentController {
   @Operation(summary = "Creates a document")
   @ApiResponse(responseCode = "200", description = ResponseMessage.SUCCESS_CREATION)
   @ApiResponse(responseCode = "500", description = ResponseMessage.ERROR_INTERNAL)
-  public ResponseEntity<BaseResponse<Integer>> createDocument(@RequestBody DocumentRequestDto document) {
+  public ResponseEntity<BaseResponse<Integer>> createDocument(
+      Authentication authentication,
+      @RequestBody DocumentRequestDto document
+  ) {
     ResponseEntity<BaseResponse<Integer>> response;
     try {
       log.info("Creating new document");
-      Integer useCaseResult = documentsUseCase.createDocument(documentMapper.toDocumentDto(document));
+      String userId = ((JwtAuthenticationToken) authentication).getUserDto().getId();
+      Integer useCaseResult = documentsUseCase.createDocument(userId, documentMapper.toDocumentDto(document));
 
       log.info("Successfully created new document with ID: {}", useCaseResult);
       response = ResponseEntity.ok(BaseResponse.success(useCaseResult));
@@ -156,9 +163,11 @@ public class DocumentController {
   @Operation(summary = "Updates a concept")
   @ApiResponse(responseCode = "200", description = ResponseMessage.SUCCESS_UPDATE)
   @ApiResponse(responseCode = "500", description = ResponseMessage.ERROR_INTERNAL)
-  public ResponseEntity<BaseResponse<Void>> updateConcept(@PathVariable Integer documentId,
-                                                          @PathVariable Integer conceptId,
-                                                          @RequestBody ConceptRequestDto concept) {
+  public ResponseEntity<BaseResponse<Void>> updateConcept(
+      @PathVariable Integer documentId,
+      @PathVariable Integer conceptId,
+      @RequestBody ConceptRequestDto concept
+  ) {
     ResponseEntity<BaseResponse<Void>> response;
     try {
       log.info("Updating concept with ID {}", conceptId);
@@ -178,11 +187,15 @@ public class DocumentController {
   @Operation(summary = "Deletes a document")
   @ApiResponse(responseCode = "200", description = ResponseMessage.SUCCESS_DELETION)
   @ApiResponse(responseCode = "500", description = ResponseMessage.ERROR_INTERNAL)
-  public ResponseEntity<BaseResponse<Void>> deleteDocument(@PathVariable Integer documentId) {
+  public ResponseEntity<BaseResponse<Void>> deleteDocument(
+      Authentication authentication,
+      @PathVariable Integer documentId
+  ) {
     ResponseEntity<BaseResponse<Void>> response;
     try {
       log.info("Deleting document with ID {}", documentId);
-      documentsUseCase.deleteDocument(documentId);
+      String userId = ((JwtAuthenticationToken) authentication).getUserDto().getId();
+      documentsUseCase.deleteDocument(userId, documentId);
 
       log.info("Successfully deleted document with ID {}", documentId);
       response = ResponseEntity.ok(BaseResponse.success(null));

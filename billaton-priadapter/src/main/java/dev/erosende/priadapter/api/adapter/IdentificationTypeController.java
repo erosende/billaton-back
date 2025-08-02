@@ -4,24 +4,23 @@ import dev.erosende.billaton.application.domain.model.IdentificationTypeDto;
 import dev.erosende.billaton.application.domain.ports.primary.IdentificationTypesUseCase;
 import dev.erosende.priadapter.api.constant.ResponseMessage;
 import dev.erosende.priadapter.api.mapper.IdentificationTypeMapper;
-import dev.erosende.priadapter.api.model.response.IdentificationTypeResponseDto;
 import dev.erosende.priadapter.api.model.response.BaseResponse;
+import dev.erosende.priadapter.api.model.response.IdentificationTypeResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.logging.LogLevel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @Slf4j
-@CrossOrigin(origins = "*")
 @Tag(name = "Identification types Controller")
 @RestController("IdentificationTypesController")
 @RequestMapping("/billaton/identification-types")

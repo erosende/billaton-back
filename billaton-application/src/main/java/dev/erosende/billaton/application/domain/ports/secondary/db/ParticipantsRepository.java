@@ -6,16 +6,16 @@ import java.util.Optional;
 
 public interface ParticipantsRepository {
 
-  List<ParticipantDto> findParticipants(int participantType, String searchTerm);
+  List<ParticipantDto> findParticipants(String userId, int participantType, String searchTerm);
 
   Optional<ParticipantDto> findParticipantById(Integer participantId);
 
-  Integer saveParticipant(ParticipantDto participant);
+  Integer saveParticipant(String userId, ParticipantDto participant);
 
   void updateParticipant(ParticipantDto participant);
 
-  void deleteParticipant(Integer participantId);
+  void deleteParticipant(String userId, Integer participantId);
 
-  void softDeleteParticipant(Integer participantId);
+  void softDeleteParticipant(String userId, Integer participantId);
 
 }

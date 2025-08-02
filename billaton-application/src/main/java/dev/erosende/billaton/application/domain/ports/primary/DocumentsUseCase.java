@@ -11,11 +11,11 @@ import java.util.List;
 
 public interface DocumentsUseCase {
 
-  Page<DocumentDto> getDocuments(PagingParams pagingParams);
+  Page<DocumentDto> getDocuments(String userId, PagingParams pagingParams);
 
   List<ConceptDto> getConcepts(Integer documentId);
 
-  Integer createDocument(DocumentDto document);
+  Integer createDocument(String userId, DocumentDto document);
 
   Integer createConcept(ConceptDto concept);
 
@@ -23,7 +23,7 @@ public interface DocumentsUseCase {
 
   void updateConcept(ConceptDto concept);
 
-  void deleteDocument(Integer documentId);
+  void deleteDocument(String userId, Integer documentId);
 
   void deleteConcept(Integer documentId, Integer conceptId);
 

@@ -24,18 +24,18 @@ public class ParticipantsUseCaseImpl implements ParticipantsUseCase {
   private final IssuerConfigRepository issuerConfigRepository;
 
   @Override
-  public List<ParticipantDto> getParticipants(ParticipantType participantType, String searchTerm) {
-    return participantsRepository.findParticipants(participantType.getValue(), searchTerm);
+  public List<ParticipantDto> getParticipants(String userId, ParticipantType participantType, String searchTerm) {
+    return participantsRepository.findParticipants(userId, participantType.getValue(), searchTerm);
   }
 
   @Override
   @Transactional(rollbackFor = Exception.class)
-  public Integer createRecipientParticipant(ParticipantDto participant) {
+  public Integer createRecipientParticipant(String userId, ParticipantDto participant) {
     Integer addressId = addressRepository.saveAddress(participant.getAddress());
     participant.getAddress().setAddressId(addressId);
     participant.setParticipantTypeId(ParticipantType.RECIPIENT.getValue());
 
-    return participantsRepository.saveParticipant(participant);
+    return participantsRepository.saveParticipant(userId, participant);
   }
 
   @Override
@@ -62,15 +62,15 @@ public class ParticipantsUseCaseImpl implements ParticipantsUseCase {
 
   @Override
   @Transactional(rollbackFor = Exception.class)
-  public void deleteRecipientParticipant(Integer participantId) throws ResourceNotFoundException {
-    int historifiedCount = documentsRepository.softDeleteDocumentByRecipient(participantId);
+  public void deleteRecipientParticipant(String userId, Integer participantId) throws ResourceNotFoundException {
+    int historifiedCount = documentsRepository.softDeleteDocumentByRecipient(userId, participantId);
     if (historifiedCount == 0) {
       ParticipantDto recipient = participantsRepository.findParticipantById(participantId)
           .orElseThrow(() -> new ResourceNotFoundException("Recipient", "participantId", participantId));
-      participantsRepository.deleteParticipant(participantId);
+      participantsRepository.deleteParticipant(userId, participantId);
       addressRepository.deleteAddress(recipient.getAddress().getAddressId());
     } else {
-      participantsRepository.softDeleteParticipant(participantId);
+      participantsRepository.softDeleteParticipant(userId, participantId);
     }
   }
 

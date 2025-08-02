@@ -1,0 +1,59 @@
+# Git
+.git
+.gitignore
+
+# Documentation
+README.md
+README-DEPLOYMENT.md
+*.md
+
+# IDE files
+.idea/
+.vscode/
+.cursor/
+*.iml
+*.ipr
+*.iws
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+target/
+!**/src/main/target/
+!**/src/test/target/
+
+# Logs
+*.log
+logs/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Deployment files
+deploy.sh
+deploy.ps1
+docker-compose.yml
+docker-compose.*.yml
+
+# Maven wrapper (we'll use the one in the build container)
+.mvn/
+mvnw
+mvnw.cmd
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# Test results
+test-results/
+coverage/
+
+# Node modules (if any)
+node_modules/

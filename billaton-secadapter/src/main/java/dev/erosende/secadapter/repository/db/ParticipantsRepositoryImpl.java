@@ -7,6 +7,7 @@ import dev.erosende.secadapter.mapper.ParticipantRowMapper;
 import java.text.MessageFormat;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -32,6 +33,7 @@ public class ParticipantsRepositoryImpl implements ParticipantsRepository {
       INNER JOIN identification_type it ON it.identification_type_id = p.identification_type_id
       INNER JOIN participant_type pt ON pt.participant_type_id = p.participant_type_id
       WHERE p.participant_type_id = :participantType
+        AND p.user_id = :userId
         AND (
           COALESCE(:searchTerm, '') = ''
           OR p.name LIKE :searchTerm
@@ -62,7 +64,8 @@ public class ParticipantsRepositoryImpl implements ParticipantsRepository {
         phone_number,
         address_id,
         identification_type_id,
-        participant_type_id
+        participant_type_id,
+        user_id
       )
       VALUES (
         :identificationNumber,
@@ -72,7 +75,8 @@ public class ParticipantsRepositoryImpl implements ParticipantsRepository {
         :phoneNumber,
         :addressId,
         :identificationTypeId,
-        :participantTypeId
+        :participantTypeId,
+        :userId
       )
       """;
 
@@ -90,23 +94,24 @@ public class ParticipantsRepositoryImpl implements ParticipantsRepository {
 
   private static final String DELETE_PARTICIPANT_SQL = """
       DELETE FROM participant
-      WHERE participant_id = :participantId AND participant_type_id = 2 -- participant type 2 is Recipient
+      WHERE participant_id = :participantId AND user_id = :userId AND participant_type_id = 2-- participant type 2 is Recipient
       """;
 
   private static final String SOFT_DELETE_PARTICIPANT_SQL = """
       UPDATE participant
       SET historical = true
-      WHERE participant_id = :participantId AND participant_type_id = 2 -- participant type 2 is Recipient
+      WHERE participant_id = :participantId AND user_id = :userId AND participant_type_id = 2 -- participant type 2 is Recipient
       """;
 
   private final NamedParameterJdbcTemplate jdbcTemplate;
   private final ParticipantRowMapper participantRowMapper;
 
   @Override
-  public List<ParticipantDto> findParticipants(int participantType, String searchTerm) {
+  public List<ParticipantDto> findParticipants(String userId, int participantType, String searchTerm) {
     SqlParameterSource params = new MapSqlParameterSource()
         .addValue("participantType", participantType)
-        .addValue("searchTerm", getWildcard(searchTerm));
+        .addValue("searchTerm", getWildcard(searchTerm))
+        .addValue("userId", UUID.fromString(userId));
     return jdbcTemplate.query(FIND_PARTICIPANTS_SQL, params, participantRowMapper);
   }
 
@@ -127,7 +132,7 @@ public class ParticipantsRepositoryImpl implements ParticipantsRepository {
   }
 
   @Override
-  public Integer saveParticipant(ParticipantDto participant) {
+  public Integer saveParticipant(String userId, ParticipantDto participant) {
     SqlParameterSource params = new MapSqlParameterSource()
         .addValue("identificationNumber", participant.getIdentificationNumber())
         .addValue("name", participant.getName())
@@ -136,7 +141,8 @@ public class ParticipantsRepositoryImpl implements ParticipantsRepository {
         .addValue("phoneNumber", participant.getPhoneNumber())
         .addValue("identificationTypeId", participant.getIdentificationTypeId())
         .addValue("addressId", participant.getAddress().getAddressId())
-        .addValue("participantTypeId", participant.getParticipantTypeId());
+        .addValue("participantTypeId", participant.getParticipantTypeId())
+        .addValue("userId", UUID.fromString(userId));
 
     KeyHolder keyHolder = new GeneratedKeyHolder();
     jdbcTemplate.update(SAVE_PARTICIPANT_SQL, params, keyHolder, new String[]{"participant_id"});
@@ -158,14 +164,18 @@ public class ParticipantsRepositoryImpl implements ParticipantsRepository {
   }
 
   @Override
-  public void deleteParticipant(Integer participantId) {
-    SqlParameterSource params = new MapSqlParameterSource("participantId", participantId);
+  public void deleteParticipant(String userId, Integer participantId) {
+    SqlParameterSource params = new MapSqlParameterSource()
+        .addValue("participantId", participantId)
+        .addValue("userId", UUID.fromString(userId));
     jdbcTemplate.update(DELETE_PARTICIPANT_SQL, params);
   }
 
   @Override
-  public void softDeleteParticipant(Integer participantId) {
-    SqlParameterSource params = new MapSqlParameterSource("participantId", participantId);
+  public void softDeleteParticipant(String userId, Integer participantId) {
+    SqlParameterSource params = new MapSqlParameterSource()
+        .addValue("participantId", participantId)
+        .addValue("userId", UUID.fromString(userId));
     jdbcTemplate.update(SOFT_DELETE_PARTICIPANT_SQL, params);
   }
 

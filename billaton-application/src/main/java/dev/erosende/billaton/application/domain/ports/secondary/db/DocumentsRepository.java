@@ -8,20 +8,20 @@ import java.util.Optional;
 
 public interface DocumentsRepository {
 
-  Page<DocumentDto> findDocuments(PagingParams pagingParams);
+  Page<DocumentDto> findDocuments(String userId, PagingParams pagingParams);
 
   Optional<DocumentDto> findDocumentById(Integer documentId);
 
-  Integer saveDocument(DocumentDto document);
+  Integer saveDocument(String userId, DocumentDto document);
 
   void updateDocument(DocumentDto document);
 
   void updateDocumentResourcePath(Integer documentId, String resourcePath);
 
-  void deleteDocumentLogically(Integer documentId);
+  void deleteDocumentLogically(String userId, Integer documentId);
 
-  int softDeleteDocumentByRecipient(Integer recipientId);
+  int softDeleteDocumentByRecipient(String userId, Integer recipientId);
 
-  int softDeleteDocumentByIssuer(Integer issuerId);
+  int softDeleteDocumentByIssuer(String userId, Integer issuerId);
 
 }

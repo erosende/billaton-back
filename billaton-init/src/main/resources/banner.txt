@@ -3,5 +3,5 @@ ${AnsiColor.BRIGHT_GREEN}                                             ,--.
 | .-. :|  .--'| .-. |(  .-'| .-. :|      \' .-. | .-. :\  `'  /
 \   --.|  |   ' '-' '.-'  `)   --.|  ||  |\ `-' \   --. \    /
  `----'`--'    `---' `----' `----'`--''--' `---' `----'  `--'
-${AnsiColor.BRIGHT_YELLOW}|*| ${AnsiColor.BRIGHT_BLUE}${app.name} ${AnsiColor.BLACK}v${project.version}
+${AnsiColor.BRIGHT_YELLOW}|*| ${AnsiColor.BRIGHT_BLUE}bill-a-ton ${AnsiColor.BLACK}v${project.version}
 ${AnsiColor.BRIGHT_YELLOW}|*| ${AnsiColor.BRIGHT_BLUE}spring boot ${AnsiColor.BLACK}${spring-boot.version}${AnsiColor.DEFAULT}

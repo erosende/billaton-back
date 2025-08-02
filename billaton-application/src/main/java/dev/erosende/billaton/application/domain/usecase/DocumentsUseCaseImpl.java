@@ -42,8 +42,8 @@ public class DocumentsUseCaseImpl implements DocumentsUseCase {
 
   @Override
   @Transactional(readOnly = true)
-  public Page<DocumentDto> getDocuments(PagingParams pagingParams) {
-    return documentsRepository.findDocuments(pagingParams);
+  public Page<DocumentDto> getDocuments(String userId, PagingParams pagingParams) {
+    return documentsRepository.findDocuments(userId, pagingParams);
   }
 
   @Override
@@ -53,8 +53,8 @@ public class DocumentsUseCaseImpl implements DocumentsUseCase {
 
   @Override
   @Transactional(rollbackFor = Exception.class)
-  public Integer createDocument(DocumentDto document) {
-    return documentsRepository.saveDocument(document);
+  public Integer createDocument(String userId, DocumentDto document) {
+    return documentsRepository.saveDocument(userId, document);
   }
 
   @Override
@@ -77,8 +77,8 @@ public class DocumentsUseCaseImpl implements DocumentsUseCase {
 
   @Override
   @Transactional(rollbackFor = Exception.class)
-  public void deleteDocument(Integer documentId) {
-    documentsRepository.deleteDocumentLogically(documentId);
+  public void deleteDocument(String userId, Integer documentId) {
+    documentsRepository.deleteDocumentLogically(userId, documentId);
   }
 
   @Override

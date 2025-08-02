@@ -16,10 +16,7 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Repository
 @RequiredArgsConstructor
@@ -31,6 +28,7 @@ public class DocumentsRepositoryImpl implements DocumentsRepository {
     put("documentDate", "d.document_date");
     put("recipientId", "d.recipient_id");
     put("historical", "d.historical");
+    put("userId",  "d.user_id");
   }};
 
   public static final String WHERE_KEYWORD = " WHERE ";
@@ -58,13 +56,15 @@ public class DocumentsRepositoryImpl implements DocumentsRepository {
         document_date,
         document_code,
         issuer_id,
-        recipient_id
+        recipient_id,
+        user_id
       ) VALUES (
         :documentTypeId,
         :documentDate,
         :documentCode,
         :issuerId,
-        :recipientId
+        :recipientId,
+        :userId
       )
   """;
 
@@ -88,19 +88,19 @@ public class DocumentsRepositoryImpl implements DocumentsRepository {
   private static final String DELETE_DOCUMENT_LOGICALLY_SQL = """
       UPDATE document
       SET historical = true
-      WHERE document_id = :documentId
+      WHERE document_id = :documentId AND user_id = :userId
       """;
 
   private static final String SOFT_DELETE_DOCUMENT_BY_RECIPIENT_SQL = """
       UPDATE document
       SET historical = true
-      WHERE recipient_id = :recipientId
+      WHERE recipient_id = :recipientId AND user_id = :userId
       """;
 
   private static final String SOFT_DELETE_DOCUMENT_BY_ISSUER_SQL = """
       UPDATE document
       SET historical = true
-      WHERE issuer_id = :issuerId
+      WHERE issuer_id = :issuerId AND user_id = :userId
       """;
 
   private static final String COUNT_DOCUMENTS_BASE_SQL = """
@@ -111,13 +111,14 @@ public class DocumentsRepositoryImpl implements DocumentsRepository {
   private final NamedParameterJdbcTemplate jdbcTemplate;
 
   @Override
-  public Page<DocumentDto> findDocuments(PagingParams pagingParams) {
+  public Page<DocumentDto> findDocuments(String userId, PagingParams pagingParams) {
     StringBuilder queryBuilder = new StringBuilder(FIND_DOCUMENT_BASE_SQL);
     StringBuilder countQueryBuilder = new StringBuilder(COUNT_DOCUMENTS_BASE_SQL);
     MapSqlParameterSource params = new MapSqlParameterSource();
 
     //Add filters
-    PagingUtils.addHistoricalFilterToPagingParams(pagingParams, false);
+    PagingUtils.addFilterToPagingParams(pagingParams, "userId", UUID.fromString(userId));
+    PagingUtils.addFilterToPagingParams(pagingParams, "historical" ,Boolean.FALSE);
     String whereClause = PagingUtils.buildWhereClause(pagingParams.getFilters(), FIELD_MAPPINGS, params);
     if (StringUtils.isNotEmpty(whereClause)) {
       queryBuilder.append(WHERE_KEYWORD).append(whereClause);
@@ -164,13 +165,14 @@ public class DocumentsRepositoryImpl implements DocumentsRepository {
   }
 
   @Override
-  public Integer saveDocument(DocumentDto document) {
+  public Integer saveDocument(String userId, DocumentDto document) {
     SqlParameterSource params = new MapSqlParameterSource()
         .addValue("documentTypeId", document.getDocumentTypeId())
         .addValue("documentCode", document.getDocumentCode())
         .addValue("documentDate", document.getDocumentDate())
         .addValue("issuerId", document.getIssuerId())
-        .addValue("recipientId", document.getRecipientId());
+        .addValue("recipientId", document.getRecipientId())
+        .addValue("userId", UUID.fromString(userId));
     KeyHolder keyHolder = new GeneratedKeyHolder();
 
     jdbcTemplate.update(SAVE_DOCUMENT_SQL, params, keyHolder, new String[]{"document_id"});
@@ -198,20 +200,26 @@ public class DocumentsRepositoryImpl implements DocumentsRepository {
   }
 
   @Override
-  public void deleteDocumentLogically(Integer documentId) {
-    SqlParameterSource params = new MapSqlParameterSource("documentId", documentId);
+  public void deleteDocumentLogically(String userId, Integer documentId) {
+    SqlParameterSource params = new MapSqlParameterSource()
+        .addValue("documentId", documentId)
+        .addValue("userId", userId);
     jdbcTemplate.update(DELETE_DOCUMENT_LOGICALLY_SQL, params);
   }
 
   @Override
-  public int softDeleteDocumentByRecipient(Integer recipientId) {
-    SqlParameterSource params = new MapSqlParameterSource("recipientId", recipientId);
+  public int softDeleteDocumentByRecipient(String userId, Integer recipientId) {
+    SqlParameterSource params = new MapSqlParameterSource()
+        .addValue("recipientId", recipientId)
+        .addValue("userId", userId);
     return jdbcTemplate.update(SOFT_DELETE_DOCUMENT_BY_RECIPIENT_SQL, params);
   }
 
   @Override
-  public int softDeleteDocumentByIssuer(Integer issuerId) {
-    SqlParameterSource params = new MapSqlParameterSource("issuerId", issuerId);
+  public int softDeleteDocumentByIssuer(String userId, Integer issuerId) {
+    SqlParameterSource params = new MapSqlParameterSource()
+        .addValue("issuerId", issuerId)
+        .addValue("userId", userId);
     return jdbcTemplate.update(SOFT_DELETE_DOCUMENT_BY_ISSUER_SQL, params);
   }
 

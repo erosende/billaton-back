@@ -8,9 +8,9 @@ import java.util.List;
 
 public interface ParticipantsUseCase {
 
-  List<ParticipantDto> getParticipants(ParticipantType participantType, String searchTerm);
+  List<ParticipantDto> getParticipants(String userId, ParticipantType participantType, String searchTerm);
 
-  Integer createRecipientParticipant(ParticipantDto participant);
+  Integer createRecipientParticipant(String userId, ParticipantDto participant);
 
   void updateRecipientParticipant(ParticipantDto participant);
 
@@ -18,6 +18,6 @@ public interface ParticipantsUseCase {
 
   void updateIssuerConfig(IssuerConfigDto issuerConfig);
 
-  void deleteRecipientParticipant(Integer participantId) throws ResourceNotFoundException;
+  void deleteRecipientParticipant(String userId, Integer participantId) throws ResourceNotFoundException;
 
 }

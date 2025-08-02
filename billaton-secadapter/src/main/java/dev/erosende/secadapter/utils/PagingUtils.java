@@ -77,11 +77,11 @@ public class PagingUtils {
         .collect(Collectors.joining(" AND "));
   }
 
-  public static void addHistoricalFilterToPagingParams(PagingParams params, Boolean historicalValue) {
+  public static void addFilterToPagingParams(PagingParams params, String fieldName, Object value) {
     params.addFilter(
         FilterCriteria.builder()
-            .field("historical")
-            .value(historicalValue)
+            .field(fieldName)
+            .value(value)
             .operation(FilterOperation.EQUALS)
             .build()
     );
