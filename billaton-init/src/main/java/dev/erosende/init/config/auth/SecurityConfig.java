@@ -40,18 +40,13 @@ public class SecurityConfig {
                 // Configure authorization rules
                 .authorizeHttpRequests(authz -> authz
                         // Public endpoints - health checks and actuator
-                        .requestMatchers("/api/actuator/**").permitAll()
-                        .requestMatchers("/api/actuator/health").permitAll()
-                        .requestMatchers("/api/actuator/info").permitAll()
+                        .requestMatchers("actuator/**").permitAll()
                         
                         // API Documentation endpoints (if using Swagger)
                         .requestMatchers("/v3/api-docs/**").permitAll()
                         .requestMatchers("/swagger-ui/**").permitAll()
                         .requestMatchers("/swagger-ui.html").permitAll()
-                        
-                        // All other API endpoints require authentication
-                        .requestMatchers("/api/billaton/**").authenticated()
-                        
+
                         // Any other request requires authentication
                         .anyRequest().authenticated()
                 )
