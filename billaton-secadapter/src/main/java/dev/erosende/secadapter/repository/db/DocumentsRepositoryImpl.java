@@ -203,7 +203,7 @@ public class DocumentsRepositoryImpl implements DocumentsRepository {
   public void deleteDocumentLogically(String userId, Integer documentId) {
     SqlParameterSource params = new MapSqlParameterSource()
         .addValue("documentId", documentId)
-        .addValue("userId", userId);
+        .addValue("userId", UUID.fromString(userId));
     jdbcTemplate.update(DELETE_DOCUMENT_LOGICALLY_SQL, params);
   }
 
@@ -211,7 +211,7 @@ public class DocumentsRepositoryImpl implements DocumentsRepository {
   public int softDeleteDocumentByRecipient(String userId, Integer recipientId) {
     SqlParameterSource params = new MapSqlParameterSource()
         .addValue("recipientId", recipientId)
-        .addValue("userId", userId);
+        .addValue("userId", UUID.fromString(userId));
     return jdbcTemplate.update(SOFT_DELETE_DOCUMENT_BY_RECIPIENT_SQL, params);
   }
 
@@ -219,7 +219,7 @@ public class DocumentsRepositoryImpl implements DocumentsRepository {
   public int softDeleteDocumentByIssuer(String userId, Integer issuerId) {
     SqlParameterSource params = new MapSqlParameterSource()
         .addValue("issuerId", issuerId)
-        .addValue("userId", userId);
+        .addValue("userId", UUID.fromString(userId));
     return jdbcTemplate.update(SOFT_DELETE_DOCUMENT_BY_ISSUER_SQL, params);
   }
 
