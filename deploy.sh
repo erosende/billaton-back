@@ -174,6 +174,10 @@ elif [[ "$ENVIRONMENT" == "production" ]]; then
         "R2_IMAGES_BUCKET"
         "R2_ENDPOINT"
         "SUPABASE_JWT_SECRET"
+        "SUPABASE_STORAGE_URL"
+        "SUPABASE_STORAGE_ACCESS_KEY"
+        "SUPABASE_STORAGE_SECRET_KEY"
+        "SUPABASE_PROJECT_ID"
     )
     
     missing_vars=()
