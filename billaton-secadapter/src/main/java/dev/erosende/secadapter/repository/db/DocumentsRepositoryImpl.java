@@ -1,5 +1,6 @@
 package dev.erosende.secadapter.repository.db;
 
+import dev.erosende.billaton.application.domain.model.DocumentBackupDto;
 import dev.erosende.billaton.application.domain.model.DocumentDto;
 import dev.erosende.billaton.application.domain.model.generic.Page;
 import dev.erosende.billaton.application.domain.model.generic.PagingParams;
@@ -28,7 +29,7 @@ public class DocumentsRepositoryImpl implements DocumentsRepository {
     put("documentDate", "d.document_date");
     put("recipientId", "d.recipient_id");
     put("historical", "d.historical");
-    put("userId",  "d.user_id");
+    put("userId", "d.user_id");
   }};
 
   public static final String WHERE_KEYWORD = " WHERE ";
@@ -50,38 +51,57 @@ public class DocumentsRepositoryImpl implements DocumentsRepository {
       LEFT JOIN concept c ON c.document_id = d.document_id
       """;
 
+  private static final String FIND_DOCUMENTS_FOR_BACKUP_SQL = """
+      SELECT d.document_id, d.document_code, dt.name AS documentType, d.document_date, d.resource_path,
+        replace(concat(pr.name, ' ', pr.surnames), ' ', '_') AS recipientFullName,
+        replace(concat(pi.name, ' ', pi.surnames), ' ', '_') AS issuerFullName
+      FROM "document" d
+      INNER JOIN document_type dt ON dt.document_type_id = d.document_type_id
+      INNER JOIN participant pr ON pr.participant_id = d.recipient_id
+      INNER JOIN participant pi ON pi.participant_id = d.issuer_id
+      WHERE d.backed_up = FALSE
+        AND d.historical = FALSE
+        AND d.resource_path IS NOT NULL
+      """;
+
   private static final String SAVE_DOCUMENT_SQL = """
-      INSERT INTO document (
-        document_type_id,
-        document_date,
-        document_code,
-        issuer_id,
-        recipient_id,
-        user_id
-      ) VALUES (
-        :documentTypeId,
-        :documentDate,
-        :documentCode,
-        :issuerId,
-        :recipientId,
-        :userId
-      )
-  """;
+          INSERT INTO document (
+            document_type_id,
+            document_date,
+            document_code,
+            issuer_id,
+            recipient_id,
+            user_id
+          ) VALUES (
+            :documentTypeId,
+            :documentDate,
+            :documentCode,
+            :issuerId,
+            :recipientId,
+            :userId
+          )
+      """;
 
   private static final String UPDATE_DOCUMENT_SQL = """
-      UPDATE document
-      SET
-        document_type_id = :documentTypeId,
-        document_date = :documentDate,
-        document_code = :documentCode,
-        issuer_id = :issuerId,
-        recipient_id = :recipientId
-      WHERE document_id = :documentId
-  """;
+          UPDATE document
+          SET
+            document_type_id = :documentTypeId,
+            document_date = :documentDate,
+            document_code = :documentCode,
+            issuer_id = :issuerId,
+            recipient_id = :recipientId
+          WHERE document_id = :documentId
+      """;
 
   private static final String UPDATE_RESOURCE_PATH_SQL = """
       UPDATE document
       SET resource_path = :resourcePath
+      WHERE document_id = :documentId
+      """;
+
+  private static final String UPDATE_BACKUP_STATUS_SQL = """
+      UPDATE document
+      SET backed_up = :backedUp
       WHERE document_id = :documentId
       """;
 
@@ -107,7 +127,7 @@ public class DocumentsRepositoryImpl implements DocumentsRepository {
       SELECT COUNT(*)
       FROM document d
       """;
-  
+
   private final NamedParameterJdbcTemplate jdbcTemplate;
 
   @Override
@@ -118,7 +138,7 @@ public class DocumentsRepositoryImpl implements DocumentsRepository {
 
     //Add filters
     PagingUtils.addFilterToPagingParams(pagingParams, "userId", UUID.fromString(userId));
-    PagingUtils.addFilterToPagingParams(pagingParams, "historical" ,Boolean.FALSE);
+    PagingUtils.addFilterToPagingParams(pagingParams, "historical", Boolean.FALSE);
     String whereClause = PagingUtils.buildWhereClause(pagingParams.getFilters(), FIELD_MAPPINGS, params);
     if (StringUtils.isNotEmpty(whereClause)) {
       queryBuilder.append(WHERE_KEYWORD).append(whereClause);
@@ -143,6 +163,11 @@ public class DocumentsRepositoryImpl implements DocumentsRepository {
     Long totalElements = jdbcTemplate.queryForObject(countQueryBuilder.toString(), params, Long.class);
 
     return Page.of(queryResult, pagingParams.getPage(), pagingParams.getSize(), totalElements != null ? totalElements : 0L);
+  }
+
+  @Override
+  public List<DocumentBackupDto> findDocumentsForBackup() {
+    return jdbcTemplate.query(FIND_DOCUMENTS_FOR_BACKUP_SQL, new BeanPropertyRowMapper<>(DocumentBackupDto.class));
   }
 
   @Override
@@ -197,6 +222,14 @@ public class DocumentsRepositoryImpl implements DocumentsRepository {
         .addValue("documentId", documentId)
         .addValue("resourcePath", resourcePath);
     jdbcTemplate.update(UPDATE_RESOURCE_PATH_SQL, params);
+  }
+
+  @Override
+  public void updateDocumentBackupStatus(Integer documentId, boolean backedUp) {
+    SqlParameterSource params = new MapSqlParameterSource()
+        .addValue("documentId", documentId)
+        .addValue("backedUp", backedUp);
+    jdbcTemplate.update(UPDATE_BACKUP_STATUS_SQL, params);
   }
 
   @Override

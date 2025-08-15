@@ -18,7 +18,7 @@ public class R2ClientConfig {
 
   private final R2Config r2Config;
 
-  @Bean
+  @Bean(name = "r2S3Client")
   public S3Client s3Client() {
     return S3Client.builder()
         .endpointOverride(URI.create(r2Config.getEndpoint()))

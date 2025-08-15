@@ -40,7 +40,7 @@ public class SecurityConfig {
                 // Configure authorization rules
                 .authorizeHttpRequests(authz -> authz
                         // Public endpoints - health checks and actuator
-                        .requestMatchers("actuator/**").permitAll()
+                        .requestMatchers("/actuator/**").permitAll()
                         
                         // API Documentation endpoints (if using Swagger)
                         .requestMatchers("/v3/api-docs/**").permitAll()

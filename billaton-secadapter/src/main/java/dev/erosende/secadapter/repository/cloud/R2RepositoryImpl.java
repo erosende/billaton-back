@@ -4,6 +4,8 @@ import dev.erosende.billaton.application.domain.ports.secondary.cloud.R2Reposito
 import dev.erosende.secadapter.config.cloud.R2Config;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
 import software.amazon.awssdk.core.ResponseBytes;
 import software.amazon.awssdk.core.sync.RequestBody;
@@ -14,11 +16,14 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 @Slf4j
 @Repository
-@RequiredArgsConstructor
 public class R2RepositoryImpl implements R2Repository {
 
-  private final S3Client s3Client;
-  private final R2Config r2Config;
+  @Autowired
+  @Qualifier("r2S3Client")
+  private S3Client s3Client;
+
+  @Autowired
+  private R2Config r2Config;
 
   @Override
   public String uploadDocument(String key, byte[] fileContent, String contentType) {

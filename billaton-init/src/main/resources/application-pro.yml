@@ -13,6 +13,13 @@ cloudflare:
 supabase:
   jwt:
     secret: ${SUPABASE_JWT_SECRET}
+  storage:
+    url: ${SUPABASE_STORAGE_URL}
+    access-key: ${SUPABASE_STORAGE_ACCESS_KEY}
+    secret-key: ${SUPABASE_STORAGE_SECRET_KEY}
+    bucket-name: document-backups
+    region: eu-west-3
+    project-id: ${SUPABASE_PROJECT_ID}
 
 spring:
   application:
@@ -38,6 +45,9 @@ spring:
       resourceserver:
         jwt:
           jwk-set-uri: ${supabase.url}/auth/v1/jwks
+
+scheduled-services:
+  document-backup: 0 0 5 * * MON
 
 server:
   port: ${PORT:8080}
