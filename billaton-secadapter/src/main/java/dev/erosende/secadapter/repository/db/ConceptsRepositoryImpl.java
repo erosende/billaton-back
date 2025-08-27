@@ -21,6 +21,7 @@ public class ConceptsRepositoryImpl implements ConceptsRepository {
       SELECT c.concept_id, c.description, c.amount, c.price_per_unit, c.document_id
       FROM concept c
       WHERE c.document_id = :documentId
+      ORDER BY c.concept_id
       """;
 
   private static final String SAVE_CONCEPT_SQL = """
