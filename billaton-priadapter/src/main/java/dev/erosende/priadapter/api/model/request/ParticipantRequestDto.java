@@ -1,5 +1,6 @@
 package dev.erosende.priadapter.api.model.request;
 
+import dev.erosende.billaton.application.domain.enums.ParticipantType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -21,6 +22,12 @@ public class ParticipantRequestDto {
       description = "Identification number type",
       example = "DNI")
   private Integer identificationTypeId;
+
+  @NotNull
+  @Schema(
+      description = "Type of participant, issuer or recipient",
+      example = "Issuer")
+  private String participantTypeCode;
 
   @NotBlank
   @Schema(

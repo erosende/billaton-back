@@ -64,8 +64,8 @@ public class ParticipantController {
     return response;
   }
 
-  @PostMapping("/recipients")
-  @Operation(summary = "Creates a new participant of type Recipient")
+  @PostMapping
+  @Operation(summary = "Creates a new participant")
   @ApiResponse(responseCode = "201", description = ResponseMessage.SUCCESS_CREATION)
   @ApiResponse(responseCode = "500", description = "example: generic not found response")
   public ResponseEntity<BaseResponse<Integer>> createRecipientParticipant(
@@ -76,7 +76,7 @@ public class ParticipantController {
     ResponseEntity<BaseResponse<Integer>> response;
     try {
       String userId = ((JwtAuthenticationToken) authentication).getUserDto().getId();
-      Integer useCaseResult = participantsUseCase.createRecipientParticipant(userId, participantMapper.toParticipantDto(participant));
+      Integer useCaseResult = participantsUseCase.createParticipant(userId, participantMapper.toParticipantDto(participant));
       log.info("Successfully created participant with ID: {}", useCaseResult);
 
       response = new ResponseEntity<>(BaseResponse.success(useCaseResult), HttpStatus.CREATED);

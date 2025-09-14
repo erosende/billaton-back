@@ -1,6 +1,7 @@
 package dev.erosende.billaton.application.domain.usecase;
 
 import dev.erosende.billaton.application.domain.enums.ParticipantType;
+import dev.erosende.billaton.application.domain.exception.InvalidRequestException;
 import dev.erosende.billaton.application.domain.exception.ResourceNotFoundException;
 import dev.erosende.billaton.application.domain.model.IssuerConfigDto;
 import dev.erosende.billaton.application.domain.model.ParticipantDto;
@@ -30,10 +31,12 @@ public class ParticipantsUseCaseImpl implements ParticipantsUseCase {
 
   @Override
   @Transactional(rollbackFor = Exception.class)
-  public Integer createRecipientParticipant(String userId, ParticipantDto participant) {
+  public Integer createParticipant(String userId, ParticipantDto participant) throws InvalidRequestException {
     Integer addressId = addressRepository.saveAddress(participant.getAddress());
     participant.getAddress().setAddressId(addressId);
-    participant.setParticipantTypeId(ParticipantType.RECIPIENT.getValue());
+
+    ParticipantType participantType = ParticipantType.getByCode(participant.getParticipantType());
+    participant.setParticipantTypeId(participantType.getValue());
 
     return participantsRepository.saveParticipant(userId, participant);
   }
