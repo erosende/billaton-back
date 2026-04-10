@@ -21,11 +21,6 @@ public class DocumentRequestDto {
         example = "2024-01-15")
     private LocalDate documentDate;
 
-    @Schema(
-        description = "Code of the document",
-        example = "1-2025")
-    private String documentCode;
-
     @NotNull
     @Schema(
         description = "Identifier of the issuer",
@@ -37,5 +32,19 @@ public class DocumentRequestDto {
         description = "Identifier of the recipient",
         example = "1")
     private Integer recipientId;
+
+    @NotNull
+    @Schema(description = "Invoice type code", example = "F1")
+    private String tipoFactura;
+
+    @NotNull
+    @Schema(description = "Operation description for AEAT", example = "Servicios de consultoría")
+    private String descripcionOperacion;
+
+    @Schema(description = "ID of the rectified document (only for R1/R4)", example = "42")
+    private Integer facturaRectificadaId;
+
+    @Schema(description = "Rectification type: S (sustitutiva) or I (incremental)")
+    private String tipoRectificativa;
 
 }

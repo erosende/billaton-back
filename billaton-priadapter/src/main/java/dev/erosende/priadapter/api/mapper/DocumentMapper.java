@@ -13,9 +13,11 @@ public interface DocumentMapper {
 
   DocumentResponseDto toDocumentResponseDto(DocumentDto src);
 
+  @Mapping(target = "documentCode", ignore = true)
   DocumentDto toDocumentDto(DocumentRequestDto src);
 
   @Mapping(target = "documentId", expression = "java(documentId)")
+  @Mapping(target = "documentCode", ignore = true)
   DocumentDto toDocumentDto(DocumentRequestDto src, Integer documentId);
 
 }
