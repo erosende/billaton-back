@@ -21,6 +21,19 @@ supabase:
     region: eu-west-3
     project-id: ${SUPABASE_PROJECT_ID}
 
+# VeriFactu (AEAT)
+verifactu:
+  env: ${VERIFACTU_ENV:PRE}
+  certificate:
+    path: ${VERIFACTU_CERTIFICATE_PATH:}
+    password: ${VERIFACTU_CERTIFICATE_PASSWORD:}
+  sistema:
+    id: ${VERIFACTU_SISTEMA_ID:01}
+    version: ${VERIFACTU_SISTEMA_VERSION:1.0.0}
+  productor:
+    nif: ${VERIFACTU_PRODUCTOR_NIF:}
+    nombre: ${VERIFACTU_PRODUCTOR_NOMBRE:}
+
 spring:
   application:
     name: bill-a-ton
