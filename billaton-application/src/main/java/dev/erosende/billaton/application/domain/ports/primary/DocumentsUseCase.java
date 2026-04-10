@@ -27,7 +27,7 @@ public interface DocumentsUseCase {
 
   void deleteConcept(Integer documentId, Integer conceptId);
 
-  DocumentFileDto generateDocumentAsPdf(Integer documentId) throws ResourceNotFoundException;
+  DocumentFileDto generateDocumentAsPdf(String userId, Integer documentId) throws ResourceNotFoundException;
 
   DocumentFileDto downloadDocumentAsPdf(Integer documentId) throws ResourceNotFoundException;
 

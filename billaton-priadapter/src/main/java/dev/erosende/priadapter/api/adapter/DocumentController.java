@@ -251,11 +251,12 @@ public class DocumentController {
   @Operation(summary = "Generates a document and uploads it to the cloud")
   @ApiResponse(responseCode = "200", description = ResponseMessage.SUCCESS_OPERATION)
   @ApiResponse(responseCode = "500", description = ResponseMessage.ERROR_INTERNAL)
-  public ResponseEntity<?> generateDocument(@PathVariable Integer documentId) {
+  public ResponseEntity<?> generateDocument(Authentication authentication, @PathVariable Integer documentId) {
     ResponseEntity<?> response;
     try {
+      String userId = ((JwtAuthenticationToken) authentication).getUserDto().getId();
       log.info("Generating pdf for document with ID {}", documentId);
-      DocumentFileDto useCaseResult = documentsUseCase.generateDocumentAsPdf(documentId);
+      DocumentFileDto useCaseResult = documentsUseCase.generateDocumentAsPdf(userId, documentId);
 
       response = buildDocumentFileResponseEntity(documentId, useCaseResult);
     } catch (Exception e) {

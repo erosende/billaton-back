@@ -39,7 +39,7 @@ public class DocumentsRepositoryImpl implements DocumentsRepository {
   private static final String FIND_DOCUMENT_BASE_SQL = """
       SELECT DISTINCT
              d.document_id, d.document_type_id, d.document_code, d.document_date, d.resource_path,
-             d.issuer_id, d.recipient_id, dt.name AS document_type,
+             d.issuer_id, d.recipient_id, d.tipo_factura, d.descripcion_operacion, d.tipo_rectificativa, dt.name AS document_type,
              SUM(c.amount * c.price_per_unit * (1 + (ic.vat / 100))) OVER (PARTITION BY d.document_id) AS total_amount,
              CONCAT(r.name, ' ', r.surnames) AS recipient_name,
              CONCAT(i.name, ' ', i.surnames) AS issuer_name

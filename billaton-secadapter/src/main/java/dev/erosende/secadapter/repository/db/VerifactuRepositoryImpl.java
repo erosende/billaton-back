@@ -15,6 +15,7 @@ import java.sql.SQLException;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 @RequiredArgsConstructor
@@ -96,7 +97,7 @@ public class VerifactuRepositoryImpl implements VerifactuRepository {
                 .addValue("huellaAnterior", record.getHuellaAnterior())
                 .addValue("fechaHoraGenRegistro", record.getFechaHoraGenRegistro())
                 .addValue("status", record.getStatus())
-                .addValue("userId", record.getUserId());
+                .addValue("userId", record.getUserId() != null ? UUID.fromString(record.getUserId()) : null);
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update(SAVE_SQL, params, keyHolder, new String[]{"verifactu_record_id"});
         return keyHolder.getKey().intValue();

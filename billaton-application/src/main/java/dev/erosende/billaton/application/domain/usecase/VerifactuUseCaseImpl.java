@@ -25,7 +25,7 @@ public class VerifactuUseCaseImpl implements VerifactuUseCase {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void retrySubmission(Integer documentId) {
+    public void retrySubmission(Integer documentId) throws ResourceNotFoundException {
         VerifactuRecordDto record = verifactuRepository.findByDocumentId(documentId)
                 .orElseThrow(() -> new ResourceNotFoundException("VerifactuRecord", "documentId", documentId));
 

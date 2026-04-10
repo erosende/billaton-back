@@ -131,7 +131,7 @@ public class DocumentsUseCaseImpl implements DocumentsUseCase {
   // TODO This needs data validation before attempting to generate the report
   @Override
   @Transactional(rollbackFor = Exception.class)
-  public DocumentFileDto generateDocumentAsPdf(Integer documentId) throws ResourceNotFoundException {
+  public DocumentFileDto generateDocumentAsPdf(String userId, Integer documentId) throws ResourceNotFoundException {
     ReportDataDto reportData = new ReportDataDto();
     fillDocumentData(documentId, reportData);
     fillIssuerData(reportData);
@@ -147,7 +147,7 @@ public class DocumentsUseCaseImpl implements DocumentsUseCase {
     try {
       VerifactuRecordDto verifactuRecord = verifactuRecordBuilder.buildAlta(
           document, reportData.getIssuer(), reportData.getIssuerConfig(),
-          reportData.getConcepts(), null // userId set below
+          reportData.getConcepts(), userId
       );
 
       String previousHuella = verifactuRepository.findLastHuellaByIssuerNif(verifactuRecord.getIssuerNif()).orElse(null);
