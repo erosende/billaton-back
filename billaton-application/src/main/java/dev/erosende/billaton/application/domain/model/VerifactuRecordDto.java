@@ -33,6 +33,8 @@ public class VerifactuRecordDto {
     private OffsetDateTime sentAt;
     private String userId;
 
+    private String descripcionOperacion;
+
     // Rectificativa fields (loaded from document when building XML)
     private String tipoRectificativa;
     private String facturaRectificadaNif;

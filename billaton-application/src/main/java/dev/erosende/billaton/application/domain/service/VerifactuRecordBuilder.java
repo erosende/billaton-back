@@ -42,6 +42,7 @@ public class VerifactuRecordBuilder {
                 .cuotaRepercutida(cuotaTotal)
                 .vatPercentage(issuerConfig.getVat())
                 .claveRegimen(issuerConfig.getClaveRegimen() != null ? issuerConfig.getClaveRegimen() : "01")
+                .descripcionOperacion(document.getDescripcionOperacion())
                 .tipoRectificativa(document.getTipoRectificativa())
                 .fechaHoraGenRegistro(OffsetDateTime.now(SPAIN_ZONE))
                 .status(VerifactuStatus.PENDING.name())
