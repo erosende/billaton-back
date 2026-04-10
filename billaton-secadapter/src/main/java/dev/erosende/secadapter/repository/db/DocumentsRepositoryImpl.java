@@ -71,14 +71,22 @@ public class DocumentsRepositoryImpl implements DocumentsRepository {
             document_code,
             issuer_id,
             recipient_id,
-            user_id
+            user_id,
+            tipo_factura,
+            descripcion_operacion,
+            factura_rectificada_id,
+            tipo_rectificativa
           ) VALUES (
             :documentTypeId,
             :documentDate,
             :documentCode,
             :issuerId,
             :recipientId,
-            :userId
+            :userId,
+            :tipoFactura,
+            :descripcionOperacion,
+            :facturaRectificadaId,
+            :tipoRectificativa
           )
       """;
 
@@ -89,7 +97,11 @@ public class DocumentsRepositoryImpl implements DocumentsRepository {
             document_date = :documentDate,
             document_code = :documentCode,
             issuer_id = :issuerId,
-            recipient_id = :recipientId
+            recipient_id = :recipientId,
+            tipo_factura = :tipoFactura,
+            descripcion_operacion = :descripcionOperacion,
+            factura_rectificada_id = :facturaRectificadaId,
+            tipo_rectificativa = :tipoRectificativa
           WHERE document_id = :documentId
       """;
 
@@ -197,7 +209,11 @@ public class DocumentsRepositoryImpl implements DocumentsRepository {
         .addValue("documentDate", document.getDocumentDate())
         .addValue("issuerId", document.getIssuerId())
         .addValue("recipientId", document.getRecipientId())
-        .addValue("userId", UUID.fromString(userId));
+        .addValue("userId", UUID.fromString(userId))
+        .addValue("tipoFactura", document.getTipoFactura())
+        .addValue("descripcionOperacion", document.getDescripcionOperacion())
+        .addValue("facturaRectificadaId", document.getFacturaRectificadaId())
+        .addValue("tipoRectificativa", document.getTipoRectificativa());
     KeyHolder keyHolder = new GeneratedKeyHolder();
 
     jdbcTemplate.update(SAVE_DOCUMENT_SQL, params, keyHolder, new String[]{"document_id"});
@@ -212,7 +228,11 @@ public class DocumentsRepositoryImpl implements DocumentsRepository {
         .addValue("documentCode", document.getDocumentCode())
         .addValue("documentDate", document.getDocumentDate())
         .addValue("issuerId", document.getIssuerId())
-        .addValue("recipientId", document.getRecipientId());
+        .addValue("recipientId", document.getRecipientId())
+        .addValue("tipoFactura", document.getTipoFactura())
+        .addValue("descripcionOperacion", document.getDescripcionOperacion())
+        .addValue("facturaRectificadaId", document.getFacturaRectificadaId())
+        .addValue("tipoRectificativa", document.getTipoRectificativa());
     jdbcTemplate.update(UPDATE_DOCUMENT_SQL, params);
   }
 
