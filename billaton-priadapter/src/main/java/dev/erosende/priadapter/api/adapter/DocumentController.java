@@ -3,7 +3,10 @@ package dev.erosende.priadapter.api.adapter;
 import dev.erosende.billaton.application.domain.model.ConceptDto;
 import dev.erosende.billaton.application.domain.model.DocumentDto;
 import dev.erosende.billaton.application.domain.model.DocumentFileDto;
+import dev.erosende.billaton.application.domain.model.VerifactuRecordDto;
 import dev.erosende.billaton.application.domain.model.auth.JwtAuthenticationToken;
+import dev.erosende.billaton.application.domain.ports.primary.VerifactuUseCase;
+import dev.erosende.priadapter.api.model.response.VerifactuStatusResponseDto;
 import dev.erosende.billaton.application.domain.model.generic.Page;
 import dev.erosende.billaton.application.domain.model.generic.PagingParams;
 import dev.erosende.billaton.application.domain.ports.primary.DocumentsUseCase;
@@ -42,6 +45,7 @@ public class DocumentController {
   private final DocumentsUseCase documentsUseCase;
   private final DocumentMapper documentMapper;
   private final ConceptMapper conceptMapper;
+  private final VerifactuUseCase verifactuUseCase;
 
   @GetMapping
   @Operation(summary = "Returns a page with documents")
@@ -254,6 +258,55 @@ public class DocumentController {
       DocumentFileDto useCaseResult = documentsUseCase.generateDocumentAsPdf(documentId);
 
       response = buildDocumentFileResponseEntity(documentId, useCaseResult);
+    } catch (Exception e) {
+      response = new ResponseEntity<>(BaseResponse.error(e, log, LogLevel.ERROR), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    return response;
+  }
+
+  @GetMapping("/{documentId}/verifactu")
+  @Operation(summary = "Returns VeriFactu submission status for a document")
+  @ApiResponse(responseCode = "200", description = ResponseMessage.SUCCESS_RETRIEVAL)
+  @ApiResponse(responseCode = "404", description = "No VeriFactu record found")
+  @ApiResponse(responseCode = "500", description = ResponseMessage.ERROR_INTERNAL)
+  public ResponseEntity<BaseResponse<VerifactuStatusResponseDto>> getVerifactuStatus(@PathVariable Integer documentId) {
+    ResponseEntity<BaseResponse<VerifactuStatusResponseDto>> response;
+    try {
+      log.info("Retrieving VeriFactu status for document {}", documentId);
+      VerifactuRecordDto record = verifactuUseCase.getStatus(documentId).orElse(null);
+
+      if (record == null) {
+        response = new ResponseEntity<>(BaseResponse.success(null), HttpStatus.NOT_FOUND);
+      } else {
+        VerifactuStatusResponseDto statusDto = VerifactuStatusResponseDto.builder()
+            .status(record.getStatus())
+            .csvAeat(record.getCsvAeat())
+            .errorMessage(record.getErrorMessage())
+            .retryCount(record.getRetryCount())
+            .huella(record.getHuella())
+            .sentAt(record.getSentAt())
+            .build();
+        response = ResponseEntity.ok(BaseResponse.success(statusDto));
+      }
+    } catch (Exception e) {
+      response = new ResponseEntity<>(BaseResponse.error(e, log, LogLevel.ERROR), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    return response;
+  }
+
+  @PostMapping("/{documentId}/verifactu/retry")
+  @Operation(summary = "Retries VeriFactu submission for a failed record")
+  @ApiResponse(responseCode = "200", description = ResponseMessage.SUCCESS_OPERATION)
+  @ApiResponse(responseCode = "500", description = ResponseMessage.ERROR_INTERNAL)
+  public ResponseEntity<BaseResponse<Void>> retryVerifactu(@PathVariable Integer documentId) {
+    ResponseEntity<BaseResponse<Void>> response;
+    try {
+      log.info("Retrying VeriFactu submission for document {}", documentId);
+      verifactuUseCase.retrySubmission(documentId);
+
+      response = ResponseEntity.ok(BaseResponse.success(null));
     } catch (Exception e) {
       response = new ResponseEntity<>(BaseResponse.error(e, log, LogLevel.ERROR), HttpStatus.INTERNAL_SERVER_ERROR);
     }
