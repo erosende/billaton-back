@@ -18,5 +18,9 @@ public class DocumentDto {
     private Integer recipientId;
     private String recipientName;
     private Double totalAmount;
+    private String tipoFactura;
+    private String descripcionOperacion;
+    private Integer facturaRectificadaId;
+    private String tipoRectificativa;
 
 }

@@ -10,5 +10,6 @@ public class IssuerConfigDto {
   private Integer vat;
   private String paymentAccountNumber;
   private String logoPath;
+  private String claveRegimen;
 
 }
